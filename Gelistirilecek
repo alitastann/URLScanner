@@ -1,0 +1,173 @@
+using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+
+namespace URLScanner.Controllers
+{
+    public class HomeController : Controller
+    {
+        public IActionResult Index()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Scan(string url)
+        {
+            try
+            {
+                // URL'in geçerli olup olmadığını kontrol et
+                if (!Uri.IsWellFormedUriString(url, UriKind.Absolute))
+                {
+                    throw new Exception("Invalid URL");
+                }
+
+                // URL'in HTTPS protokolünü kullanıp kullanmadığını kontrol et
+                if (!url.StartsWith("https://"))
+                {
+                    throw new Exception("URL must use HTTPS protocol");
+                }
+
+                // URL'i Uri nesnesine dönüştür
+                Uri uri = new Uri(url);
+
+                // URL'in ana bölümünü al
+                string host = uri.Host;
+
+                // URL'in parametre bölümünü al
+                string query = uri.Query;
+
+                // URL parametrelerini bir sözlüğe dönüştür
+                Dictionary<string, string> parameters = new Dictionary<string, string>();
+                foreach (var pair in query.TrimStart('?').Split('&'))
+                {
+                    var parts = pair.Split('=');
+                    if (parts.Length == 2)
+                    {
+                        parameters[parts[0]] = parts[1];
+                    }
+                }
+
+                // URL parametrelerinin sayısını al
+                int parameterCount = parameters.Count;
+
+                // URL parametrelerinin uzunluklarını al
+                List<int> parameterLengths = new List<int>();
+                foreach (var parameter in parameters.Values)
+                {
+                    parameterLengths.Add(parameter.Length);
+                }
+
+                // URL parametrelerinin ortalama uzunluğunu al
+                double parameterAverageLength = parameterLengths.Average();
+
+                // URL parametrelerinin standart sapmasını al
+                double parameterStandardDeviation = Math.Sqrt(parameterLengths.Select(x => Math.Pow(x - parameterAverageLength, 2)).Sum() / parameterCount);
+
+                // URL parametrelerinin içerdiği özel karakterleri al
+                List<char> parameterSpecialCharacters = new List<char>();
+                foreach (var parameter in parameters.Values)
+                {
+                    foreach (var character in parameter)
+                    {
+                        if (!char.IsLetterOrDigit(character) && !parameterSpecialCharacters.Contains(character))
+                        {
+                            parameterSpecialCharacters.Add(character);
+                        }
+                    }
+                }
+
+                // URL parametrelerinin içerdiği özel karakterlerin sayısını al
+                int parameterSpecialCharacterCount = parameterSpecialCharacters.Count;
+
+                // URL parametrelerinin içerdiği özel karakterlerin oranını al
+                double parameterSpecialCharacterRatio = parameterSpecialCharacterCount / (double)parameterCount;
+
+                // URL parametrelerinin içerdiği özel karakterleri bir stringe dönüştür
+                string parameterSpecialCharacterString = string.Join(", ", parameterSpecialCharacters);
+
+                // URL parametrelerinin içerdiği özel karakterlerin tehlikeli olup olmadığını kontrol et
+                bool parameterSpecialCharacterDangerous = false;
+                foreach (var character in parameterSpecialCharacters)
+                {
+                    if (character == ';' || character == '|' || character == '&' || character == '$' || character == '`')
+                    {
+                        parameterSpecialCharacterDangerous = true;
+                        break;
+                    }
+                }
+
+                // URL parametrelerinin içerdiği özel karakterlerin tehlikeli olma sebebini belirle
+                string parameterSpecialCharacterReason = "";
+                if (parameterSpecialCharacterDangerous)
+                {
+                    parameterSpecialCharacterReason = "These characters can be used to inject commands or scripts into the web server or the web browser.";
+                }
+
+                // URL parametrelerinin içerdiği sayısal değerleri al
+                List<int> parameterNumericValues = new List<int>();
+                foreach (var parameter in parameters.Values)
+                {
+                    if (int.TryParse(parameter, out int value))
+                    {
+                        parameterNumericValues.Add(value);
+                    }
+                }
+
+                // URL parametrelerinin içerdiği sayısal değerlerin sayısını al
+                int parameterNumericValueCount = parameterNumericValues.Count;
+
+                // URL parametrelerinin içerdiği sayısal değerlerin oranını al
+                double parameterNumericValueRatio = parameterNumericValueCount / (double)parameterCount;
+
+                // URL parametrelerinin içerdiği sayısal değerlerin ortalama değerini al
+                double parameterNumericValueAverage = parameterNumericValues.Average();
+
+                // URL parametrelerinin içerdiği sayısal değerlerin standart sapmasını al
+                double parameterNumericValueStandardDeviation = Math.Sqrt(parameterNumericValues.Select(x => Math.Pow(x - parameterNumericValueAverage, 2)).Sum() / parameterNumericValueCount);
+
+                // URL parametrelerinin içerdiği sayısal değerlerin minimum ve maksimum değerlerini al
+                int parameterNumericValueMin = parameterNumericValues.Min();
+                int parameterNumericValueMax = parameterNumericValues.Max();
+
+                // URL parametrelerinin içerdiği sayısal değerlerin minimum ve maksimum değerlerinin farkını al
+                int parameterNumericValueRange = parameterNumericValueMax - parameterNumericValueMin;
+
+                // URL parametrelerinin içerdiği sayısal değerlerin tahmin edilebilir olup olmadığını kontrol et
+                bool parameterNumericValuePredictable = false;
+                if (parameterNumericValueRange < 10 || parameterNumericValueStandardDeviation < 1)
+                {
+                    parameterNumericValuePredictable = true;
+                }
+
+                // URL parametrelerinin içerdiği sayısal değerlerin tahmin edilebilir olma sebebini belirle
+                string parameterNumericValueReason = "";
+                if (parameterNumericValuePredictable)
+                {
+                    parameterNumericValueReason = "These values have a small range or a low standard deviation, which means they can be easily guessed or brute-forced by an attacker.";
+                }
+
+                // URL parametrelerinin içerdiği metinsel değerleri al
+                List<string> parameterTextValues = new List<string>();
+                foreach (var parameter in parameters.Values)
+                {
+                    if (!int.TryParse(parameter, out int value))
+                    {
+                        parameterTextValues.Add(parameter);
+                    }
+                }
+
+                // URL parametrelerinin içerdiği metinsel değerlerin sayısını al
+                int parameterTextValueCount = parameterTextValues.Count;
+
+                // URL parametrelerinin içerdiği metinsel değerlerin oranını al
+                double parameterTextValueRatio = parameterTextValueCount / (double)parameterCount;
+
+                // URL parametrelerinin içerdiği metinsel değerlerin uzunluklarını al
+                List<int> parameterTextValueLengths = new List<int>();
+                foreach (var
